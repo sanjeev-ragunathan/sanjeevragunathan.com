@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sanjeev Ragunathan</title>
+    <meta name="description" content="Sanjeev Ragunathan — personal website." />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        /* ── Theme ─────────────────────────────── */
+        --bg:             #0e0e0e;
+        --terminal-bg:    #1a1a1a;
+        --terminal-bar:   #252525;
+        --terminal-border:#2e2e2e;
+
+        --accent:         #ffffff; /* prompt */
+        --highlight:      #febc2e; /* links, highlights text */
+        --yellow:         #febc2e;
+        --red:            #ff5f57;
+        --green:          #28c840;
+
+        --text:           #ccc;
+        --text-input:     #f0f0f0;
+        --text-muted:     #555;
+        /* ─────────────────────────────────────── */
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: var(--bg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .terminal {
+        background-color: var(--terminal-bg);
+        border: 1px solid var(--terminal-border);
+        border-radius: 10px;
+        width: 600px;
+        max-width: 95vw;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+      }
+
+      .terminal-bar {
+        background-color: var(--terminal-bar);
+        padding: 12px 16px;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dot { width: 12px; height: 12px; border-radius: 50%; }
+      .dot.red    { background-color: var(--red); }
+      .dot.yellow { background-color: var(--yellow); }
+      .dot.green  { background-color: var(--green); }
+
+      .terminal-title {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin: 0 auto;
+        transform: translateX(-20px);
+      }
+
+      .terminal-body {
+        padding: 24px;
+        min-height: 400px;
+        max-height: 80vh;
+        overflow-y: auto;
+        cursor: text;
+      }
+
+      .output-line {
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+
+      .output-line.title  { color: var(--accent); }
+      .output-line.highlight  { color: var(--highlight); }
+      .output-line.muted  { color: var(--text-muted); }
+      .output-line.error  { color: var(--red); }
+
+      .output-line a {
+        color: var(--highlight);
+        text-decoration: none;
+      }
+
+      .output-line a:hover {
+        text-decoration: underline;
+      }
+
+      .input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .prompt-label {
+        color: var(--accent);
+        font-size: 13px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .terminal-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--accent);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        flex: 1;
+        caret-color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="terminal">
+
+      <div class="terminal-bar">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="terminal-title" id="terminalTitle"></div>
+      </div>
+
+      <div class="terminal-body" id="terminalBody">
+
+        <div class="output-line title">Welcome to Sanjeev's terminal.</div>
+        <div class="output-line muted">Type <span style="color: var(--highlight)">sanjeev --help</span> to get started.</div>
+        <br />
+
+        <div class="input-row">
+          <span class="prompt-label" id="promptLabel"></span>
+          <input class="terminal-input" id="terminalInput" type="text" autofocus autocomplete="off" spellcheck="false" />
+        </div>
+
+      </div>
+    </div>
+
+    <script>
+      const HOSTNAME = "cornell"; // ← location
+
+      const SHELL_PROMPT = `sanjeev@${HOSTNAME}:~$`;
+      document.getElementById("terminalTitle").textContent = `sanjeev@${HOSTNAME} ~ `;
+      document.getElementById("promptLabel").textContent = SHELL_PROMPT;
+
+      const input = document.getElementById("terminalInput");
+      const body = document.getElementById("terminalBody");
+
+      const history = [];
+      let historyIndex = -1;
+
+      const commands = {
+        "sanjeev --help": () => `
+<span style="color: var(--accent)">Available commands:</span>
+
+  sanjeev --help       show this help menu
+  sanjeev github       my GitHub profile
+  sanjeev linkedin     my LinkedIn profile
+  sanjeev email        get in touch
+  sanjeev about        a little about me
+  clear                clear the terminal
+`,
+        "sanjeev github": () =>
+          `GitHub → <a href="https://github.com/sanjeev-ragunathan" target="_blank">github.com/sanjeev-ragunathan</a>`,
+
+        "sanjeev linkedin": () =>
+          `LinkedIn → <a href="https://linkedin.com/in/sanjeev-ragunathan" target="_blank">linkedin.com/in/sanjeev-ragunathan</a>`,
+
+        "sanjeev email": () =>
+          `Email → <a href="mailto:sr2432@cornell.edu">sr2432@cornell.edu</a>`,
+
+        "sanjeev about": () => `
+I'm Sanjeev Ragunathan.
+Interested in machine learning and ai safety.
+Will be in California from June 2026.
+`,
+      };
+
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (historyIndex < history.length - 1) {
+            historyIndex++;
+            input.value = history[historyIndex];
+          }
+          return;
+        }
+
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (historyIndex > 0) {
+            historyIndex--;
+            input.value = history[historyIndex];
+          } else {
+            historyIndex = -1;
+            input.value = "";
+          }
+          return;
+        }
+
+        if (e.key !== "Enter") return;
+
+        const val = input.value.trim();
+        input.value = "";
+        historyIndex = -1;
+
+        if (val !== "") history.unshift(val);
+
+        const inputRow = document.querySelector(".input-row");
+
+        const echoLine = document.createElement("div");
+        echoLine.className = "output-line muted";
+        echoLine.textContent = SHELL_PROMPT + " " + val;
+        body.insertBefore(echoLine, inputRow);
+
+        if (val === "clear") {
+          const lines = body.querySelectorAll(".output-line");
+          lines.forEach((l) => l.remove());
+          const brs = body.querySelectorAll("br");
+          brs.forEach((b) => b.remove());
+          body.scrollTop = body.scrollHeight;
+          return;
+        }
+
+        const resultLine = document.createElement("div");
+        resultLine.className = "output-line";
+
+        if (commands[val]) {
+          resultLine.innerHTML = commands[val]();
+        } else if (val === "") {
+          body.scrollTop = body.scrollHeight;
+          return;
+        } else {
+          resultLine.className = "output-line error";
+          resultLine.textContent = `command not found: ${val}. Try "sanjeev --help"`;
+        }
+
+        body.insertBefore(resultLine, inputRow);
+
+        const spacer = document.createElement("br");
+        body.insertBefore(spacer, inputRow);
+
+        body.scrollTop = body.scrollHeight;
+      });
+
+      body.addEventListener("click", () => input.focus());
+    </script>
+  </body>
+</html>
