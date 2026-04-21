@@ -3,5 +3,5 @@
 personal website
 
 ### links:
-- [sanjeevragunathan.com](sanjeevragunathan.com)
-- [sanjeev-ragunathan.com](sanjeev-ragunathan.com)
+- [sanjeevragunathan.com](https://www.sanjeevragunathan.com)
+- [sanjeev-ragunathan.com](https://www.sanjeev-ragunathan.com)
